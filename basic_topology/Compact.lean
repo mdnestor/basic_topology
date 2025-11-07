@@ -3,7 +3,7 @@ import basic_topology.Sequence
 
 set_option linter.style.multiGoal false
 
-variable {X: Type*} {T: Family X}
+variable {X D : Type*} {T: Family X}
 
 -- define compact space and sset
 def compact (T: Family X): Prop :=
@@ -57,13 +57,14 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
     exact Set.singleton_subset_iff.mpr hxA
     exact Set.singleton_subset_iff.mpr hyB
   choose! U V hU_open hV_open h_disjoint hx_in_U hy_in_V using hy1
+
   let C := { s | ∃ y ∈ K, s = V y }
   have hC_open: C⊆ T:= by
     intro c hc
-    have : ∃y∈ K , c= V y := by exact hc
-    obtain ⟨ m,⟨hm1,hm2 ⟩ ⟩ := this
+    obtain ⟨ m,⟨hm1,hm2 ⟩ ⟩ := hc
     rw[hm2]
     exact hV_open m hm1
+
   have hC_cover: K ⊆ ⋃₀ C:= by
     intro y hyK
     simp
@@ -93,8 +94,7 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
   repeat' (apply And.intro)
   apply hT1.2
   intro b hB
-  have : ∃ C∈ C₀ , b=M C:= by exact hB
-  obtain ⟨c,hc ⟩:= this
+  obtain ⟨c,hc ⟩:= hB
   rw[hc.2]
   apply hV1
   exact hc.1
@@ -126,8 +126,7 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
   exact Set.Finite.image M hC₀2
   simp
   intro b hb
-  have : ∃ C∈ C₀ , b=M C:= by exact hb
-  obtain ⟨c,hc ⟩:= this
+  obtain ⟨c,hc ⟩:= hb
   rw[hc.2]
   apply hV2
   exact hc.1
@@ -154,10 +153,49 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
 
 -- theorem compact_iff_every_net_has_convergent_subnet--
 theorem compact_iff_net_adherent (T: Family X) : compact T  ↔ (∀ (Δ : Type u_1) (R : Endorelation Δ) (hR : directed R) (x : Δ → X), ∃ (a : X) , Net.adherent T R x a ) := by
+constructor
+intro h Δ R hr net
 sorry
+contrapose
+rw[compact]
+push_neg
+intro hC
+sorry
+
 -- theorem in a metric space compact is equivalent to sequentially compact--
 theorem compact_iff_every_sequence_has_adherent_value [DistanceSpace D] {d : X → X → D} (hd : IsMetric d) (T : Family X) (hT_metric : T = metric_open d) : compact T ↔ ∀ (s : Nat → X), ∃ (a : X), adherent_value T s a := by
 sorry
 --Theorem: If X is compact and all convergent subsequences converge to L then the sequence converges to L --
-theorem all_convergent_subsequences_imply_convergence [DistanceSpace D] {d : X → X → D} (hd : IsMetric d)(T : Family X) (hT_metric : T = metric_open d) (hT_compact : compact T) (s : Nat → X) (L : X) (h_subsequences : ∀ (k : Nat → Nat) (hk : increasing_seq k) (a : X), converges T ( s ∘ k) a → a = L) : converges T s L := by
-sorry
+theorem one_adherent_value_implies_convergence [DistanceSpace D] {d : X → X → D} (hd : IsMetric d)(T : Family X) (hT_metric : T = metric_open d) (hT_compact : compact T)(s : Nat → X) (L : X)(h_adherent : ∀ (a : X), adherent_value T s a → a = L) : converges T s L := by
+  rw[hT_metric, converges_distance_iff, converges_distance]
+  by_contra h
+  push_neg at h
+  obtain ⟨r, ⟨_,ht ⟩  ⟩:= h
+  rw[compact_iff_every_sequence_has_adherent_value hd] at hT_compact
+  have h1: ∀(t:Nat), ∃x_t, x_t ∈ Set.range (tail s t) ∧ ¬ (x_t ∈ openball d L r):= by exact fun t ↦ (fun {α} {s t} ↦ Set.not_subset.mp) (ht t)
+  let seq : ℕ → X := fun t ↦ Classical.choose (h1 t)
+  have seq_spec : ∀ t, seq t ∈ Set.range (tail s t) ∧ seq t ∉ openball d L r := fun t ↦ Classical.choose_spec (h1 t)
+  obtain ⟨a,ha ⟩:= hT_compact seq
+  have : adherent_value T s a := by
+    rw[adherent_value]
+    intro N hN t
+    rw[adherent_value] at ha
+    apply ha at hN
+    obtain ⟨m,h⟩:= hN t
+    obtain ⟨⟨k, rfl⟩, hmN⟩ := h
+    obtain ⟨j, hj⟩ := Set.mem_range.mp (seq_spec (t + k)).1
+    refine ⟨seq (t + k), ?_, hmN⟩
+    use k + j
+    simp [← hj, tail, Nat.add_assoc]
+  apply h_adherent at this
+  have hd0: d a L =0 := by exact (dist_zero_iff hd).mpr this
+  have hdn0: ¬ (d a L=0):= by
+    intro heq
+    rw [(dist_zero_iff hd).mp heq] at ha
+    rw [hT_metric] at ha
+    obtain ⟨_, ⟨k, rfl⟩, hk⟩ := ha (openball d L r) (openball_neighborhood hd L (by assumption)) 0
+    simp[tail] at hk
+    exact (seq_spec k).2 hk
+  exact hdn0 hd0
+  exact hT_metric
+  exact hd

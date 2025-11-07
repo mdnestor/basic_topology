@@ -2,12 +2,22 @@ import basic_topology.Separation
 import basic_topology.MetricTopology
 import basic_topology.Net
 
+set_option linter.style.multiGoal false
+
 variable {X Y D: Type*}
 
 -- limit of a sequence in terms of the tail
 def tail (x: Nat → X) (t: Nat): Nat → X :=
   fun n => x (t + n)
+--helpers when using tails--
+theorem tail_0 (s: Nat → X): tail s 0 = s := by
+ funext n
+ simp [tail]
 
+theorem tail_m_n (s: Nat → X)(m n :Nat)(hmn: m≥n): (tail s n) (m-n) = s m   := by
+  simp[tail]
+  simp_all only [ge_iff_le, Nat.add_sub_cancel']
+--Convergence of sequences--
 def converges (T: Family X) (x: Nat → X) (l: X): Prop :=
   ∀ N ∈ Nbhds T l, ∃ t, Set.range (tail x t) ⊆ N
 
@@ -136,4 +146,26 @@ theorem hausdorff_limit_unique_sequences (T: Family X) (h: hausdorff T) (x: Nat 
 
 --Sequences are nets--
 theorem sequence_converges_iff_net_converges (T: Family X) (s : Nat → X) (L : X) : converges T s L ↔ net_converges T (· ≤ ·) s L := by
-sorry
+  rw[net_converges,converges]
+  constructor
+  intro hc N hN
+  apply hc at hN
+  obtain ⟨t,ht ⟩:= hN
+  use t
+  intro j hj
+  apply ht
+  simp
+  use j-t
+  exact tail_m_n s j t hj
+
+  intro hU N hN
+  apply hU at hN
+  obtain ⟨t,ht ⟩:= hN
+  use t
+  intro x hx
+  simp at hx
+  obtain ⟨y, hy ⟩:= hx
+  have : t+y≥ t:= by exact Nat.le_add_right t y
+  apply ht at this
+  rw[← hy]
+  exact this
