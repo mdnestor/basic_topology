@@ -380,7 +380,7 @@ theorem hausdorff_iff_diagonal_closed {T: Family X} (hT: IsTopology T): hausdorf
   tauto
   exact product_topology_is_topology hT hT
 
-theorem hausdorff_iff_open_separable {T: Family X}: hausdorff T ↔ ∀ x y , x≠y → OpenSeparable T {x} {y} := by
+theorem hausdorff_iff_open_separable {T: Family X}: hausdorff T ↔ Hausdorff T := by
   rw[hausdorff]
   constructor
   intro hT x y hxy

@@ -31,31 +31,24 @@ theorem compactset_iff_compact_subspace (T: Family X) (A: Set X) :
     · sorry
 
 theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (hK: compactset T K): Closed T K := by
-  rw[compactset] at hK
-  rw[Closed, open_iff_eq_interior,]
+  rw [compactset] at hK
+  rw [Closed, open_iff_eq_interior]
   ext x
-  rw[interior_iff_basis_element (base_self T)]
+  rw [interior_iff_basis_element]
   constructor
   intro hx
-  rw[hausdorff_iff_open_separable] at hT2
-  simp[OpenSeparable] at hT2
+  simp [hausdorff_iff_open_separable] at hT2
   rw [Set.mem_compl_iff] at hx
-  have h_ne : ∀ y ∈ K, x ≠ y := by
+  have h_ne: ∀ y ∈ K, x ≠ y := by
     intro y hyK h_eq
     rw [h_eq] at hx
     exact hx hyK
-  have hy1 : ∀y∈ K,  ∃ U V, Open T U ∧ Open T V ∧ Disjoint U V ∧ {x} ⊆ U ∧ {y} ⊆ V:= by
+  have hy1: ∀ y ∈ K, ∃ U V, Open T U ∧ Open T V ∧ Disjoint U V ∧ {x} ⊆ U ∧ {y} ⊆ V := by
     intro y hy
     apply h_ne at hy
     apply hT2 at hy
-    obtain ⟨A,⟨hA,B,hB,hAB,hxA,hyB ⟩  ⟩:= hy
+    obtain ⟨A, B, hA, hB, hAB, hxA, hyB⟩ := hy
     use A, B
-    repeat' (apply And.intro)
-    exact hA
-    exact hB
-    exact hAB
-    exact Set.singleton_subset_iff.mpr hxA
-    exact Set.singleton_subset_iff.mpr hyB
   choose! U V hU_open hV_open h_disjoint hx_in_U hy_in_V using hy1
 
   let C := { s | ∃ y ∈ K, s = V y }
@@ -110,8 +103,7 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
       subst right
       apply Exists.intro
       · apply And.intro
-        on_goal 2 => { rfl
-        }
+        on_goal 2 => { rfl}
         · simp_all only
     · intro a
       obtain ⟨w, h⟩ := a
@@ -119,8 +111,7 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
       subst right
       apply Exists.intro
       · apply And.intro
-        on_goal 2 => { rfl
-        }
+        on_goal 2 => { rfl}
         · simp_all only
   rw [hB_eq_image]
   exact Set.Finite.image M hC₀2
@@ -149,6 +140,12 @@ theorem compact_closed_subset (hT1:IsTopology T)(hT2: hausdorff T) {K: Set X} (h
   obtain ⟨B,hB ⟩:= hx
   apply hB.2.2
   exact hB.2.1
+  exact fun ⦃a⦄ a ↦ a
+  intro U hU
+  use {U}
+  constructor
+  exact Set.singleton_subset_iff.mpr hU
+  exact Eq.symm (Set.sUnion_singleton U)
   exact hT1
 
 -- theorem compact_iff_every_net_has_convergent_subnet--

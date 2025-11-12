@@ -119,11 +119,83 @@ def Net.adherent (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): Prop :
 -- def Net.adherent' (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): Prop :=
 --   ∀ N ∈ Nbhds T a, ∀ δ₀, (Set.range (Net.tail R x δ₀) ∩ N).Nonempty
 
+
+-- A subset S ⊆ X is closed iff. forall nets in S, forall limit points of S, the limit point lies in S.
+theorem Closed_iff_net (T: Family X) (hT: IsTopology T) (A: Set X): Closed T A ↔ ∀ (Δ: Type u) (R) (x₀) (x: Δ → X), directed R → (∀ δ, x δ ∈ A) → net_converges T R x x₀ → x₀ ∈ A := by
+  rw[closed_iff_eq_closure]
+  simp[closure,adherent ]
+  constructor
+  intro hA Δ R x₀ net hR hδ h_con
+  rw[hA]
+  simp
+  intro N hN
+  rw[net_converges] at h_con
+  apply h_con at hN
+  obtain ⟨i₀, hi₀ ⟩ := hN
+  use net i₀
+  constructor
+  apply hi₀ i₀
+  apply hR.1.1
+  exact hδ i₀
+  intro hΔ
+  ext x
+  simp
+  constructor
+  intro hA N hN
+  use x
+  exact ⟨ neighborhood_mem hN , hA ⟩
+  intro hN
+  let Δ := { N: Set X // N ∈ Nbhds T x}
+  let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
+  choose! f hfN hfA using hN
+  let net: Δ → X := fun ⟨N, hN⟩ => f N hN
+  apply hΔ Δ R x net
+  apply neighborhood_direction_directed_set
+  exact hT
+  exact fun δ ↦ hfA (↑δ) δ.property
+  rw[net_converges]
+  intro U hU
+  simp_all only [Subtype.forall, Subtype.exists, exists_prop, Δ, R, net]
+  apply Exists.intro
+  · apply And.intro
+    on_goal 2 => intro a b a_1
+    on_goal 2 => apply a_1
+    · simp_all only
+    simp_all only
+  exact hT
+
 theorem Net.adherent_iff (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): adherent T R x a ↔ a ∈ ⋂ δ, closure T (Net.tail R x δ) := by
   sorry
 
-theorem Net.closure_mem_iff (T: Family X) (A: Set X) (x: X) :
-  x ∈ closure T A ↔ ∃ Δ: Type u, ∃ R, directed R ∧ ∃ a: Δ → A, net_converges T R (Subtype.val ∘ a) x := by
-  sorry
-
+theorem Net.closure_mem_iff (T: Family X) (hT: IsTopology T) (A: Set X) (x: X) :
+  x ∈ closure T A ↔ ∃ Δ: Type u, ∃ R, directed R ∧ ∃ a: Δ → X, net_converges T R a x ∧ (∀ δ, a δ ∈ A) := by
+  rw[closure,]
+  simp [_root_.adherent]
+  constructor
+  intro hx
+  let Δ := { N: Set X // N ∈ Nbhds T x}
+  let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
+  use Δ, R
+  constructor
+  apply neighborhood_direction_directed_set
+  exact hT
+  choose! f h2 h3 using hx
+  let net: Δ → X := fun ⟨N, hN⟩ => f N hN
+  use net
+  constructor
+  rw[ net_converges]
+  intro U hU
+  use ⟨U, hU⟩
+  exact fun j a ↦ a (h2 (↑j) j.property)
+  exact fun δ ↦ h3 (↑δ) δ.property
+  intro hΔR N hN
+  obtain ⟨Δ , ⟨R,hR,net,h_con,h_δ   ⟩  ⟩ := hΔR
+  rw[net_converges] at h_con
+  apply h_con at hN
+  obtain ⟨i₀, hi₀ ⟩:= hN
+  use net i₀
+  constructor
+  apply hi₀
+  apply hR.1.1
+  exact h_δ i₀
 -- TODO: a is an adherent of image(x) iff. ∃ subnet y of x s.t. y → a.
