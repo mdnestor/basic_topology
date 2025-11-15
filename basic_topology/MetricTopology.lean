@@ -152,7 +152,7 @@ theorem metric_open_finite_sInter [DistanceSpace D] {d: X → X → D} (hd: IsMe
 
 
 -- in a metric space every open ball of positive radius is a neighborhood
-theorem openball_neighborhood [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) {r: D} (hr: ⊥ < r): neighborhood (metric_opens d) (openball d x r) x := by
+theorem openball_neighborhood [DistanceSpace D] {d: X → X → D} (hd: IsMetric d) (x: X) {r: D} (hr: ⊥ < r): Nbhd (metric_opens d) x (openball d x r) := by
   exists openball d x r
   repeat' (apply And.intro)
   · apply openballs_sub_opens hd

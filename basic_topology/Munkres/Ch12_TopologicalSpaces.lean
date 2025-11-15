@@ -30,12 +30,12 @@ structure TopologicalSpace where
 
 variable {X: Type u}
 
-theorem open_empty {𝒯: Topology X}: Open (∅: Set X) := by
+theorem open_empty {𝒯: Topology X}: 𝒯.Open (∅: Set X) := by
   rw [←Set.sUnion_empty]
   apply 𝒯.isTopology.union
   apply Set.empty_subset
 
-theorem open_univ {𝒯: Topology X}: Open (Set.univ: Set X) := by
+theorem open_univ {𝒯: Topology X}: 𝒯.Open (Set.univ: Set X) := by
   rw [←Set.sInter_empty]
   apply 𝒯.isTopology.inter
   · apply Set.empty_subset

@@ -3,6 +3,7 @@ import basic_topology.Continuity
 
 variable {X Y: Type*}
 
+-- todo: we should define dense if closure = univ..
 
 def dense (𝒯: Family X) (A: Set X): Prop :=
   ∀ U ∈ 𝒯, Set.Nonempty U → Set.Nonempty (A ∩ U)
@@ -40,7 +41,7 @@ theorem dense_iff (𝒯: Family X) (A: Set X): dense 𝒯 A ↔ closure 𝒯 A =
     intro x _
     simp_all [closure, adherent, dense]
     intro N hN
-    simp_all [Nbhds, neighborhood]
+    simp_all [Nbhd]
     obtain ⟨U, hU1, hU2, hU3⟩ := hN
     have := h U hU1 (by exists x)
     rw [Set.inter_comm]
@@ -53,9 +54,9 @@ theorem dense_iff (𝒯: Family X) (A: Set X): dense 𝒯 A ↔ closure 𝒯 A =
     have: x ∈ Set.univ := by exact trivial
     rw [←h] at this
     simp at this
-    have: ∀ N ∈ Nbhds 𝒯 x, (N ∩ A).Nonempty := this
-    have: U ∈ Nbhds 𝒯 x := by
-      simp [Nbhds]
+    have: ∀ N ∈ Nbhd 𝒯 x, (N ∩ A).Nonempty := this
+    have: U ∈ Nbhd 𝒯 x := by
+      simp [Nbhd]
       exact open_neighborhood hx hU1
     rw [Set.inter_comm]
     (expose_names; exact this_1 U this)

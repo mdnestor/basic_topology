@@ -27,9 +27,9 @@ structure directed (R: Endorelation X): Prop extends preorder R where
   upperbounded: upperbounded R
 
 def net_converges {X: Type u} {Δ: Type v} (T: Family X) (R: Relation Δ Δ) (a: Δ → X) (x: X): Prop :=
-  ∀ U ∈ Nbhds T x, ∃ i₀, ∀ j, R i₀ j → a j ∈ U
+  ∀ U ∈ Nbhd T x, ∃ i₀, ∀ j, R i₀ j → a j ∈ U
 
-def neighborhood_direction (T: Family X) (x: X): Endorelation (Nbhds T x) :=
+def neighborhood_direction (T: Family X) (x: X): Endorelation (Nbhd T x) :=
   fun N₁ N₂ => N₂.val ⊆ N₁.val
 
 --sequence is a net --
@@ -51,8 +51,7 @@ theorem neighborhood_direction_directed_set (T: Family X) (x: X) (hT: IsTopology
     repeat constructor
     · exact Set.inter_subset_left
     · constructor
-      · simp_all [Nbhds]
-        exact neighborhood_binary_inter hT hN1 hN2
+      · exact neighborhood_binary_inter hT hN1 hN2
       · exact Set.inter_subset_right
 
 
@@ -77,7 +76,7 @@ theorem continuous_at_iff_all_nets_converge {X: Type u} {T: Family X} {T': Famil
     intro h_con
     obtain ⟨ N,⟨ h1,h2⟩ ⟩ := h_con
     simp[Set.not_subset] at h2
-    let Δ := { N: Set X // N ∈ Nbhds T x₀}
+    let Δ := { N: Set X // N ∈ Nbhd T x₀}
     let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
     use Δ, R
     constructor
@@ -114,7 +113,7 @@ def Net.tail (R: Endorelation Δ) (x: Δ → X) (δ₀: Δ): Set X :=
   Set.range (Net.upper_subnet R x δ₀)
 
 def Net.adherent (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): Prop :=
-  ∀ N ∈ Nbhds T a, ∀ δ₀, ∃ δ, R δ₀ δ ∧ x δ ∈ N
+  ∀ N ∈ Nbhd T a, ∀ δ₀, ∃ δ, R δ₀ δ ∧ x δ ∈ N
 
 -- def Net.adherent' (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): Prop :=
 --   ∀ N ∈ Nbhds T a, ∀ δ₀, (Set.range (Net.tail R x δ₀) ∩ N).Nonempty
@@ -145,7 +144,7 @@ theorem Closed_iff_net (T: Family X) (hT: IsTopology T) (A: Set X): Closed T A �
   use x
   exact ⟨ neighborhood_mem hN , hA ⟩
   intro hN
-  let Δ := { N: Set X // N ∈ Nbhds T x}
+  let Δ := { N: Set X // N ∈ Nbhd T x}
   let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
   choose! f hfN hfA using hN
   let net: Δ → X := fun ⟨N, hN⟩ => f N hN
@@ -173,7 +172,7 @@ theorem Net.closure_mem_iff (T: Family X) (hT: IsTopology T) (A: Set X) (x: X) :
   simp [_root_.adherent]
   constructor
   intro hx
-  let Δ := { N: Set X // N ∈ Nbhds T x}
+  let Δ := { N: Set X // N ∈ Nbhd T x}
   let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
   use Δ, R
   constructor

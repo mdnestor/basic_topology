@@ -34,11 +34,11 @@ theorem FunctionSeparable_implies_OpenSeparable {A B: Set X} (h₀: OpenSeparabl
 
 -- fréchet and hausdorff spaces
 def fréchet (𝒯: Family X): Prop :=
-  ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ x ∉ V ∧ y ∉ U
+  ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhd 𝒯 x ∧ V ∈ Nbhd 𝒯 y ∧ x ∉ V ∧ y ∉ U
 
 -- a family 𝒯 is hausdorff (aka T2) if every pair of distinct points have disjoint neighborhoods.
 def hausdorff (𝒯: Family X): Prop :=
-  ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhds 𝒯 x ∧ V ∈ Nbhds 𝒯 y ∧ Disjoint U V
+  ∀ x y, x ≠ y → ∃ U V, U ∈ Nbhd 𝒯 x ∧ V ∈ Nbhd 𝒯 y ∧ Disjoint U V
 
 -- Alternative (preferable?) Hausdorff definition not referencing neighborhoods.
 def Hausdorff (𝒯: Family X): Prop :=
@@ -98,7 +98,7 @@ theorem indiscrete_nonhausdorff {X: Type*} {x y: X} (h: x ≠ y): ¬ hausdorff {
   constructor
   · exact h
   · intro U hU
-    simp_all [Nbhds, neighborhood]
+    simp_all [Nbhd]
     exact Nonempty.intro x
 
 -- the indiscrete space is hausdorff iff. X has one point
@@ -216,7 +216,7 @@ theorem LCRI_base_is_base: is_base LCRI_base := by
   sorry
 -/
 
-theorem frechet_iff' (T: Family X)(hT: IsTopology T): fréchet T ↔ ∀ x, {x} = Set.sInter (Nbhds T x) := by
+theorem frechet_iff' (T: Family X)(hT: IsTopology T): fréchet T ↔ ∀ x, {x} = Set.sInter (Nbhd T x) := by
   rw[frechet_iff]
   constructor
   intro h x
@@ -231,10 +231,10 @@ theorem frechet_iff' (T: Family X)(hT: IsTopology T): fréchet T ↔ ∀ x, {x} 
   rw[closed_iff_eq_closure] at this
   simp_all
   simp [closure,adherent] at this
-  have h1: ∀ N∈ Nbhds T x, y ∈ N:= by exact fun N a ↦ hy N a
+  have h1: ∀ N∈ Nbhd T x, y ∈ N:= by exact fun N a ↦ hy N a
   by_contra h2
   push_neg at h2
-  have h3: {y}ᶜ ∈ Nbhds T x := by
+  have h3: {y}ᶜ ∈ Nbhd T x := by
     apply open_neighborhood
     exact id (Ne.symm h2)
     exact h y
@@ -255,7 +255,7 @@ theorem frechet_iff' (T: Family X)(hT: IsTopology T): fréchet T ↔ ∀ x, {x} 
   intro hy
   simp at hy
   let hy1 := h y
-  have : x∈ ⋂₀ Nbhds T y:= by exact hy
+  have : x∈ ⋂₀ Nbhd T y:= by exact hy
   rw[← hy1] at this
   simp
   simp at this
@@ -337,7 +337,7 @@ theorem hausdorff_iff_diagonal_closed {T: Family X} (hT: IsTopology T): hausdorf
   have h1: xy∈ {p | p.1 = p.2}ᶜ := by exact hxy
   rw[open_iff_neighborhood_of_all_points] at hc
   apply hc at h1
-  simp[neighborhood,product_topology] at h1
+  simp[Nbhd, product_topology] at h1
   obtain ⟨U,⟨ hU1,hU2,hU3⟩⟩  := h1
   have: ∃ A∈ product_topology_basis T T, A⊆ U∧ xy ∈ A := by
     apply boxes_subset_everywhere at hU1
@@ -386,9 +386,9 @@ theorem hausdorff_iff_open_separable {T: Family X}: hausdorff T ↔ Hausdorff T 
   intro hT x y hxy
   rw[OpenSeparable]
   apply hT at hxy
-  simp[Nbhds] at hxy
+  simp[Nbhd] at hxy
   obtain ⟨A,⟨hA,B,hB,hAB ⟩  ⟩:= hxy
-  simp_all[neighborhood]
+  simp_all[Nbhd]
   obtain⟨ U,hU⟩ := hA
   obtain⟨ V,hV⟩ := hB
   use U
@@ -415,7 +415,7 @@ theorem hausdorff_iff_open_separable {T: Family X}: hausdorff T ↔ Hausdorff T 
   rw[OpenSeparable] at hxy
   obtain ⟨U,⟨V,hU1,hV1,hUV,hxU,hyV ⟩ ⟩:= hxy
   use U, V
-  simp [Nbhds]
+  simp [Nbhd]
   repeat' (apply And.intro)
   apply open_neighborhood
   exact hxU rfl

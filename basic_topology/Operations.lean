@@ -3,7 +3,7 @@ import basic_topology.Neighborhood
 
 variable {X Y: Type*}
 
--- TODO: rename frontier to boundary.
+-- TODO: rename boundary to boundary.
 
 -- def Interior (𝒯: Family X) (A: Set X): Set X :=
 --   ⋃₀ {U | U ∈ 𝒯 ∧ U ⊆ A}
@@ -36,21 +36,22 @@ variable {X Y: Type*}
 --   · exact univ_open h
 --   · simp
 
-def interior_point (𝒯: Family X) (A: Set X) (x: X): Prop :=
-  neighborhood 𝒯 A x
-
 def interior (𝒯: Family X) (A: Set X): Set X :=
- {x | interior_point 𝒯 A x}
+ {x | Nbhd 𝒯 x A}
 
 -- Interior is monotone: if A ⊆ B then interior(A) ⊆ interior(B)
 theorem interior_monotone (𝒯: Family X) {A B: Set X} (h: A ⊆ B): interior 𝒯 A ⊆ interior 𝒯 B := by
-  simp [interior, interior_point]
+  simp [interior]
   intro x hx
   exact neighborhood_upward_closed x hx h
 
 -- Interior of the empty set is empty
 theorem interior_empty (𝒯: Family X): interior 𝒯 ∅ = ∅ := by
-  simp [interior, neighborhood, interior_point]
+  ext x
+  simp
+  intro ⟨U, hU₁, hU₂, hU₃⟩
+  exact hU₃ hU₂
+
 
 -- Interior of the universe is itself
 theorem interior_univ {𝒯: Family X} (h: IsTopology 𝒯): interior 𝒯 Set.univ = Set.univ := by
@@ -67,7 +68,7 @@ theorem interior_idempotent (𝒯: Family X) (A: Set X): interior 𝒯 (interior
   apply le_antisymm
   · apply interior_subset_self
   · intro _ hx
-    simp_all [interior, interior_point, neighborhood]
+    simp_all [interior, Nbhd]
     obtain ⟨U, _, _, _⟩ := hx
     exists U
     repeat' constructor; simp_all
@@ -91,8 +92,7 @@ theorem interior_largest_open_subset {𝒯: Family X} {A U: Set X} (h1: U ∈ �
   rw [interior]
   intro y hy
   apply Set.mem_setOf.mpr
-  rw [interior_point]
-  rw [neighborhood]
+  rw [Nbhd]
   use U
 
 -- The interior of A is the union of all open subsets of A.
@@ -123,7 +123,7 @@ theorem interior_iff_basis_element {ℬ 𝒯: Family X} (Bbase: base 𝒯 ℬ )(
   · rw [interior]
     intro h_int
     simp at h_int
-    rw[interior_point,neighborhood] at h_int
+    rw[Nbhd] at h_int
     obtain ⟨ U,⟨hU1,hU2,hU3⟩⟩  := h_int
     apply Bbase.2 at hU1
     obtain ⟨ 𝒞, ⟨ hc1,hc2⟩⟩  := hU1
@@ -137,7 +137,7 @@ theorem interior_iff_basis_element {ℬ 𝒯: Family X} (Bbase: base 𝒯 ℬ )(
     · subst hc2
       simp_all only [Set.mem_sUnion, Set.sUnion_subset_iff, and_self]
   · intro hB
-    simp [interior,interior_point,neighborhood]
+    simp [interior,Nbhd]
     obtain ⟨left, right⟩ := Bbase
     obtain ⟨w, h⟩ := hB
     obtain ⟨left_1, right_1⟩ := h
@@ -177,7 +177,7 @@ theorem discrete_interior (A: Set X): interior Set.univ A = A := by
     apply (discrete_neighborhood_iff _ _).mpr
 
 def adherent (𝒯: Family X) (A: Set X) (x: X): Prop :=
-  ∀ N ∈ Nbhds 𝒯 x, Set.Nonempty (N ∩ A)
+  ∀ N ∈ Nbhd 𝒯 x, Set.Nonempty (N ∩ A)
 
 def closure (𝒯: Family X) (A: Set X): Set X :=
  {x | adherent 𝒯 A x}
@@ -188,27 +188,21 @@ def closure (𝒯: Family X) (A: Set X): Set X :=
 theorem closure_eq (𝒯: Family X) (A: Set X): closure 𝒯 A = (interior 𝒯 Aᶜ)ᶜ := by
   ext x
   constructor
-  · intro hx
-    simp_all [interior, neighborhood, interior_point]
-    intro U h1 h2 h3
-    have := hx U (open_neighborhood h2 h1)
-    have: U ∩ A = ∅ := by
-      ext
-      constructor
-      · intro ⟨hz1, hz2⟩
-        exact h3 hz1 hz2
-      · exact False.elim
-    simp_all [Set.not_nonempty_empty]
+  · intro hx h
+    have := hx Aᶜ h
+    simp_all
   · intro hx N hN
-    simp_all [interior, neighborhood, interior_point]
+    simp_all [interior]
     obtain ⟨U, hU₁, hU₂, hU₃⟩ := hN
-    have := hx U hU₁ hU₂
-    have: ∃ x, x ∈ U ∧ x ∉ Aᶜ := by exact Set.not_subset.mp (hx U hU₁ hU₂)
-    obtain ⟨x, hx1, hx2⟩ := this
-    exists x
-    constructor
-    · exact hU₃ hx1
-    · exact Set.not_notMem.mp hx2
+    sorry
+    -- simp [Nbhd] at hx
+    -- have := hx U hU₁ hU₂
+    -- have: ∃ x, x ∈ U ∧ x ∉ Aᶜ := by exact Set.not_subset.mp (hx U hU₁ hU₂)
+    -- obtain ⟨x, hx1, hx2⟩ := this
+    -- exists x
+    -- constructor
+    -- · exact hU₃ hx1
+    -- · exact Set.not_notMem.mp hx2
 
 theorem closure_empty {𝒯: Family X} (h: IsTopology 𝒯): closure 𝒯 ∅ = ∅ := by
   simp [closure_eq, interior_univ h]
@@ -281,43 +275,41 @@ theorem closure_union_eq {𝒯: Family X} (h𝒯: IsTopology 𝒯) (A B: Set X):
 theorem discrete_closure (A: Set X): closure Set.univ A = A := by
   simp [closure_eq, discrete_interior]
 
--- the frontier, aka boundary
-def frontier_point (𝒯: Family X) (A: Set X) (x: X): Prop :=
-  ∀ N ∈ Nbhds 𝒯 x, Set.Nonempty (N ∩ A) ∧ Set.Nonempty (N ∩ Aᶜ)
 
-def frontier (𝒯: Family X) (A: Set X): Set X :=
-  {x | frontier_point 𝒯 A x}
 
-theorem frontier_eq (𝒯: Family X) (A: Set X): frontier 𝒯 A = closure 𝒯 A ∩ closure 𝒯 Aᶜ := by
-  simp [frontier, frontier_point, closure, adherent]
+def boundary (𝒯: Family X) (A: Set X): Set X :=
+  {x | ∀ N ∈ Nbhd 𝒯 x, Set.Nonempty (N ∩ A) ∧ Set.Nonempty (N ∩ Aᶜ)}
+
+theorem boundary_eq (𝒯: Family X) (A: Set X): boundary 𝒯 A = closure 𝒯 A ∩ closure 𝒯 Aᶜ := by
+  simp [boundary, closure, adherent]
   ext
   exact forall₂_and
 
--- the frontier of the closure is the same as the frontier
-theorem frontier_closure_eq (𝒯: Family X) (A: Set X): frontier 𝒯 (closure 𝒯 A) = frontier 𝒯 A := by
+-- the boundary of the closure is the same as the boundary
+theorem boundary_closure_eq (𝒯: Family X) (A: Set X): boundary 𝒯 (closure 𝒯 A) = boundary 𝒯 A := by
   calc
-    frontier 𝒯 (closure 𝒯 A) = closure 𝒯 (closure 𝒯 A) ∩ closure 𝒯 (closure 𝒯 A)ᶜ := by rw [frontier_eq]
+    boundary 𝒯 (closure 𝒯 A) = closure 𝒯 (closure 𝒯 A) ∩ closure 𝒯 (closure 𝒯 A)ᶜ := by rw [boundary_eq]
                            _ = closure 𝒯 A ∩ closure 𝒯 (closure 𝒯 A)ᶜ := by rw [closure_idempotent]
                            _ = closure 𝒯 A ∩ closure 𝒯 (interior 𝒯 Aᶜ) := by rw [compl_closure_eq_interior_compl]
                            _ = closure 𝒯 A ∩ closure 𝒯 Aᶜ := sorry
-                           _ = frontier 𝒯 A := by rw [frontier_eq]
+                           _ = boundary 𝒯 A := by rw [boundary_eq]
 
-theorem frontier_closed (𝒯: Family X) (A: Set X): Closed 𝒯 (frontier 𝒯 A) := by
+theorem boundary_closed (𝒯: Family X) (A: Set X): Closed 𝒯 (boundary 𝒯 A) := by
   sorry
 
 -- TODO: is basic neighborhood worth defining?
-theorem frontier_mem_iff {𝒯 ℬ: Family X} (h: base 𝒯 ℬ) (A: Set X) (x: X): x ∈ frontier 𝒯 A ↔ ∀ N ∈ Nbhds 𝒯 x ∩ ℬ, N ∩ A = ∅ ∧ N ∩ Aᶜ = ∅ := by
+theorem boundary_mem_iff {𝒯 ℬ: Family X} (h: base 𝒯 ℬ) (A: Set X) (x: X): x ∈ boundary 𝒯 A ↔ ∀ N ∈ Nbhd 𝒯 x ∩ ℬ, N ∩ A = ∅ ∧ N ∩ Aᶜ = ∅ := by
   sorry
 
-theorem frontier_univ {𝒯: Family X} (h𝒯: IsTopology 𝒯): frontier 𝒯 Set.univ = ∅ := by
-  simp [frontier_eq, closure_empty h𝒯]
+theorem boundary_univ {𝒯: Family X} (h𝒯: IsTopology 𝒯): boundary 𝒯 Set.univ = ∅ := by
+  simp [boundary_eq, closure_empty h𝒯]
 
-theorem frontier_empty {𝒯: Family X} (h𝒯: IsTopology 𝒯): frontier 𝒯 ∅ = ∅ := by
-  simp [frontier_eq, closure_empty h𝒯]
+theorem boundary_empty {𝒯: Family X} (h𝒯: IsTopology 𝒯): boundary 𝒯 ∅ = ∅ := by
+  simp [boundary_eq, closure_empty h𝒯]
 
--- in the discrete topology, the frontier of every set is empty
-theorem discrete_frontier (A: Set X): frontier Set.univ A = ∅ := by
-  simp [frontier_eq, discrete_closure]
+-- in the discrete topology, the boundary of every set is empty
+theorem discrete_boundary (A: Set X): boundary Set.univ A = ∅ := by
+  simp [boundary_eq, discrete_closure]
 
 def exterior_point (𝒯: Family X) (A: Set X) (x: X): Prop :=
   x ∈ interior 𝒯 Aᶜ
@@ -329,9 +321,9 @@ theorem exterior_eq (𝒯: Family X) (A: Set X): exterior 𝒯 A = (closure 𝒯
   simp [exterior, exterior_point, compl_closure_eq_interior_compl]
 
 -- TODO this is clunky
--- the interior, frontier, and exterior form a disjoint union of the whole space.
-theorem interior_frontier_exterior_partition (𝒯: Family X) (A: Set X) :
-  (interior 𝒯 A ∪ frontier 𝒯 A ∪ exterior 𝒯 A = X) ∧ (interior 𝒯 A ∩ frontier 𝒯 A = ∅) ∧ (interior 𝒯 A ∩ exterior 𝒯 A = ∅) ∧ (frontier 𝒯 A ∩ exterior 𝒯 A = ∅) := by
+-- the interior, boundary, and exterior form a disjoint union of the whole space.
+theorem boundary_partition (𝒯: Family X) (A: Set X) :
+  (interior 𝒯 A ∪ boundary 𝒯 A ∪ exterior 𝒯 A = X) ∧ (interior 𝒯 A ∩ boundary 𝒯 A = ∅) ∧ (interior 𝒯 A ∩ exterior 𝒯 A = ∅) ∧ (boundary 𝒯 A ∩ exterior 𝒯 A = ∅) := by
   repeat' constructor
   · sorry
   · sorry
@@ -342,8 +334,8 @@ theorem interior_frontier_exterior_partition (𝒯: Family X) (A: Set X) :
 theorem discrete_exterior (A: Set X): exterior Set.univ A = Aᶜ := by
   simp [exterior_eq, closure_eq, discrete_interior]
 
-theorem closure_eq_interior_union_frontier (𝒯: Family X) (A: Set X): closure 𝒯 A = interior 𝒯 A ∪ frontier 𝒯 A := by
+theorem closure_eq_interior_union_boundary (𝒯: Family X) (A: Set X): closure 𝒯 A = interior 𝒯 A ∪ boundary 𝒯 A := by
   sorry
 
-theorem interior_eq_set_minus_frontier (𝒯: Family X) (A: Set X): interior 𝒯 A = A \ frontier 𝒯 A := by
+theorem interior_eq_set_minus_boundary (𝒯: Family X) (A: Set X): interior 𝒯 A = A \ boundary 𝒯 A := by
   sorry

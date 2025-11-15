@@ -2,31 +2,31 @@ import basic_topology.Topology
 
 variable {X Y: Type*} {𝒯: Family X}
 
-def neighborhood (𝒯: Family X) (N: Set X) (x: X): Prop :=
-  ∃ U ∈ 𝒯, x ∈ U ∧ U ⊆ N
+def Nbhd (𝒯: Family X) (x: X): Family X :=
+  {N | ∃ U ∈ 𝒯, x ∈ U ∧ U ⊆ N}
 
-def OpenNeighborhood (𝒯: Family X) (U: Set X) (x: X): Prop :=
+def OpenNbhd (𝒯: Family X) (x: X) (U: Set X): Prop :=
   x ∈ U ∧ U ∈ 𝒯
 
-theorem OpenNeighborhood.neighborhood (h: OpenNeighborhood 𝒯 U x): neighborhood 𝒯 U x := by
+theorem OpenNeighborhood.neighborhood (h: OpenNbhd 𝒯 x U): Nbhd 𝒯 x U := by
   exists U
   repeat' constructor
-  exact h.2
-  exact h.1
+  · exact h.2
+  · exact h.1
   exact fun ⦃a⦄ a ↦ a
 
 -- The whole space is a neighborhood of every point
-theorem neighborhood_univ (h: IsTopology 𝒯) (x: X): neighborhood 𝒯 Set.univ x := by
+theorem neighborhood_univ (h: IsTopology 𝒯) (x: X): Nbhd 𝒯 x Set.univ := by
   exists Set.univ
   simp
   exact univ_open h
 
 -- If x ∈ U and U is open then U is a neighborhood of x
-theorem open_neighborhood {U: Set X} {x: X} (h1: x ∈ U) (h2: U ∈ 𝒯): neighborhood 𝒯 U x := by
+theorem open_neighborhood {U: Set X} {x: X} (h1: x ∈ U) (h2: U ∈ 𝒯): Nbhd 𝒯 x U := by
   exists U
 
 -- A set is open iff. it is a neighborhood of all its points.
-theorem open_iff_neighborhood_of_all_points (h𝒯: IsTopology 𝒯) (A: Set X): Open 𝒯 A ↔ ∀ x ∈ A, neighborhood 𝒯 A x := by
+theorem open_iff_neighborhood_of_all_points (h𝒯: IsTopology 𝒯) (A: Set X): Open 𝒯 A ↔ ∀ x ∈ A, Nbhd 𝒯 x A := by
   constructor
   · intro hA x hx
     exists A
@@ -49,7 +49,7 @@ theorem open_iff_neighborhood_of_all_points (h𝒯: IsTopology 𝒯) (A: Set X):
     exact h2
 
 -- In the discrete topology, N is a neighborhood of x iff x ∈ N.
-theorem discrete_neighborhood_iff (N: Set X) (x: X): neighborhood Set.univ N x ↔ x ∈ N := by
+theorem discrete_neighborhood_iff (N: Set X) (x: X): Nbhd Set.univ x N ↔ x ∈ N := by
   constructor
   · intro ⟨U, _, hU2, hU3⟩
     exact hU3 hU2
@@ -58,7 +58,7 @@ theorem discrete_neighborhood_iff (N: Set X) (x: X): neighborhood Set.univ N x �
     simp_all
 
 -- In the indiscrete topology, N is a neighborhood of x iff N is the whole space
-theorem indiscrete_neighborhood_iff (N: Set X) (x: X): neighborhood {∅, Set.univ} N x ↔ N = Set.univ := by
+theorem indiscrete_neighborhood_iff (N: Set X) (x: X): Nbhd {∅, Set.univ} x N ↔ N = Set.univ := by
   constructor
   · intro ⟨_, _, hU2, _⟩
     simp_all [ne_of_mem_of_not_mem' hU2]
@@ -66,13 +66,10 @@ theorem indiscrete_neighborhood_iff (N: Set X) (x: X): neighborhood {∅, Set.un
     rw [h]
     apply neighborhood_univ (indiscrete_is_topology X)
 
--- The set of neighborhoods of a point
-def Nbhds (𝒯: Family X) (x: X): Family X :=
- {N | neighborhood 𝒯 N x}
 
 -- neighborhood properties
 -- N1: if A is a neighborhood and A ⊆ B then B is a neighborhood
-theorem neighborhood_upward_closed (x: X) {A B: Set X} (h1: neighborhood 𝒯 A x) (h2: A ⊆ B): neighborhood 𝒯 B x := by
+theorem neighborhood_upward_closed (x: X) {A B: Set X} (h1: Nbhd 𝒯 x A) (h2: A ⊆ B): Nbhd 𝒯 x B := by
   obtain ⟨U, hU1, hU2, hU3⟩ := h1
   exists U
   repeat' constructor
@@ -81,8 +78,8 @@ theorem neighborhood_upward_closed (x: X) {A B: Set X} (h1: neighborhood 𝒯 A 
   · exact le_trans hU3 h2
 
 -- N2: every finite intersection of neighborhoods is a neighborhood
-theorem neighborhood_binary_inter {𝒯: Family X} {x: X} {A: Set X} (h𝒯: IsTopology 𝒯) {B: Set X} (hA: neighborhood 𝒯 A x)(hB: neighborhood 𝒯 B x): neighborhood 𝒯 (A ∩ B) x := by
-  simp [neighborhood]
+theorem neighborhood_binary_inter {𝒯: Family X} {x: X} {A: Set X} (h𝒯: IsTopology 𝒯) {B: Set X} (hA: Nbhd 𝒯 x A)(hB: Nbhd 𝒯 x B): Nbhd 𝒯 x (A ∩ B) := by
+  simp [Nbhd]
   obtain ⟨ U,⟨hU1,hU2,hU3⟩⟩  := hA
   obtain ⟨ V,⟨hV1,hV2,hV3⟩⟩ := hB
   use U∩V
@@ -90,17 +87,12 @@ theorem neighborhood_binary_inter {𝒯: Family X} {x: X} {A: Set X} (h𝒯: IsT
   · exact binary_inter_open h𝒯 hU1 hV1
   · constructor
     · exact Set.mem_inter hU2 hV2
-    · constructor
-      · have: U∩V⊆ U := by exact Set.inter_subset_left
-        exact fun ⦃a⦄ a_1 ↦ hU3 (this a_1)
-      · have: U∩V⊆ V := by exact Set.inter_subset_right
-        exact fun ⦃a⦄ a_1 ↦ hV3 (this a_1)
+    · exact Set.inter_subset_inter hU3 hV3
 
 -- N2: every finite intersection of neighborhoods is a neighborhood
-theorem neighborhood_finite_inter {𝒯: Family X} (h𝒯: IsTopology 𝒯) (x: X) (𝒩: Family X) (h1: 𝒩 ⊆ Nbhds 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhds 𝒯 x := by
+theorem neighborhood_finite_inter {𝒯: Family X} (h𝒯: IsTopology 𝒯) (x: X) (𝒩: Family X) (h1: 𝒩 ⊆ Nbhd 𝒯 x) (h2: Finite 𝒩): ⋂₀ 𝒩 ∈ Nbhd 𝒯 x := by
   apply finite_inter_iff.mpr
-  · simp [Nbhds]
-    constructor
+  · constructor
     · apply neighborhood_univ h𝒯
     · intro _ hA _ hB
       exact neighborhood_binary_inter h𝒯 hA hB
@@ -109,13 +101,13 @@ theorem neighborhood_finite_inter {𝒯: Family X} (h𝒯: IsTopology 𝒯) (x: 
 
 -- N3: x belongs to all its neighborhoods
 
-theorem neighborhood_mem {𝒯: Family X} {x: X} {N: Set X} (h: neighborhood 𝒯 N x): x ∈ N := by
+theorem neighborhood_mem {𝒯: Family X} {x: X} {N: Set X} (h: Nbhd 𝒯 x N): x ∈ N := by
   obtain ⟨_, _, hU2, hU3⟩ := h
   exact hU3 hU2
 
 -- N4: if V is a neighborhood of x, there exists a neighborhood W of x
 -- such that for all y in W, V is a neighborhood of y.
-theorem neighborhood_linking {𝒯: Family X} {x: X} {V: Set X} (h: neighborhood 𝒯 V x): ∃ W ∈ Nbhds 𝒯 x, ∀ y ∈ W, V ∈ Nbhds 𝒯 y := by
+theorem neighborhood_linking {𝒯: Family X} {x: X} {V: Set X} (h: Nbhd 𝒯 x V): ∃ W ∈ Nbhd 𝒯 x, ∀ y ∈ W, V ∈ Nbhd 𝒯 y := by
   obtain ⟨U, hU₁, hU₂, _⟩ := h
   exists U
   constructor
@@ -131,7 +123,7 @@ structure neighborhood_axioms (𝒩: X → Family X): Prop where
   linking: ∀ x, ∀ V ∈ 𝒩 x, ∃ W ∈ 𝒩 x, ∀ y ∈ W, V ∈ 𝒩 y -- rename
 
 -- Nhbds satisties these as we just showed
-theorem nbhds_obeys_neighborhood_axioms {𝒯: Family X} (h𝒯: IsTopology 𝒯): neighborhood_axioms (Nbhds 𝒯) := {
+theorem nbhds_obeys_neighborhood_axioms {𝒯: Family X} (h𝒯: IsTopology 𝒯): neighborhood_axioms (Nbhd 𝒯) := {
   upward_closed := neighborhood_upward_closed
   finite_inter := neighborhood_finite_inter h𝒯
   point_mem := fun _ _ => neighborhood_mem
@@ -141,7 +133,7 @@ theorem nbhds_obeys_neighborhood_axioms {𝒯: Family X} (h𝒯: IsTopology 𝒯
 def neighborhood_topology (𝒩: X → Family X): Family X :=
  {U | ∀ x ∈ U, U ∈ 𝒩 x}
 
-theorem neighborhood_axioms_unique_topology (𝒩: X → Family X) (h𝒩: neighborhood_axioms 𝒩): ∃! 𝒯, (IsTopology 𝒯 ∧ 𝒩 = Nbhds 𝒯) := by
+theorem neighborhood_axioms_unique_topology (𝒩: X → Family X) (h𝒩: neighborhood_axioms 𝒩): ∃! 𝒯, (IsTopology 𝒯 ∧ 𝒩 = Nbhd 𝒯) := by
   exists neighborhood_topology 𝒩
   repeat' (apply And.intro)
   · sorry -- show that `neighborhood_topology 𝒩` is a topology

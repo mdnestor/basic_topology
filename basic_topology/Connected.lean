@@ -125,7 +125,7 @@ example (h₁: ConnectedSet T A) (h₂: A ⊆ B) (h₃: B ⊆ closure T A): Conn
 -- TODO: If B is a connected set s.t. A ∩ B and Aᶜ ∩ B are nonempty then B ∩ Boundary(A).
 
 -- TODO: In a connected space every nonempty set other than X has a nonempty boundary.
-example (h1: Connected T) (h2: A.Nonempty) (h3: Aᶜ.Nonempty): (frontier T A).Nonempty := by
+example (h1: Connected T) (h2: A.Nonempty) (h3: Aᶜ.Nonempty): (boundary T A).Nonempty := by
   sorry
 
 -- TODO: A union of connected sets with nonempty intersection is connected.

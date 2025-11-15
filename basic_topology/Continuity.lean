@@ -54,7 +54,7 @@ theorem continuous_coarsen_codomain {T': Family Y} (hT': T' ⊆ T₂) {f: X → 
   exact h _ (hT' hV)
 
 def ContinuousAt (T₁: Family X) (T₂: Family Y) (f: X → Y) (x: X): Prop :=
-  ∀ N₂ ∈ Nbhds T₂ (f x), ∃ N₁ ∈ Nbhds T₁ x, f '' N₁ ⊆ N₂
+  ∀ N₂ ∈ Nbhd T₂ (f x), ∃ N₁ ∈ Nbhd T₁ x, f '' N₁ ⊆ N₂
 
 -- A map is continuous iff. it is continuous at all points.
 -- Only requires a topology on the domain :)

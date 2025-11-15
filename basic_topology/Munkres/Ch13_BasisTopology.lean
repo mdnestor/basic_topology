@@ -2,37 +2,40 @@ import basic_topology.Munkres.Ch12_TopologicalSpaces
 
 variable {X: Type u}
 
-structure isBasis (ℬ: Family X) where
+structure isBasis (ℬ: Family X): Prop where
   basis₁: ∀ x, ∃ B ∈ ℬ, x ∈ B
   basis₂: ∀ x, ∀ B₁ ∈ ℬ, ∀ B₂ ∈ ℬ, x ∈ B₁ ∩ B₂ → ∃ B₃ ∈ ℬ, B₃ ⊆ B₁ ∩ B₂
 
-structure Basis (X: Type u) where
-  basis: Family X
-  isBasis: isBasis basis
+def Basis.generate (ℬ: Family X): Family X :=
+  {U | ∀ x ∈ U, ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ U}
 
-instance: Membership (Set X) (Basis X) := {
-  mem := fun ℬ B => B ∈ ℬ.basis
+def Basis.singleton (X: Type u): Family X :=
+  Set.range fun x => {x}
+
+def isBasis.singleton (X: Type u): isBasis (Basis.singleton X) := {
+  basis₁ := sorry
+  basis₂ := sorry
 }
 
-def Basis.generate (ℬ: Basis X): Topology X := {
-  Open := {U | ∀ x ∈ U, ∃ B ∈ ℬ, x ∈ B ∧ B ⊆ U}
-  isTopology := {
-    union := sorry
-    inter := sorry
-  }
-}
+-- TODO: Example 1, Example 2.
 
-def Basis.singletons (X: Type u): Basis X := {
-  basis := Set.range (fun x => {x})
-  isBasis := {
-    basis₁ := sorry
-    basis₂ := sorry
-  }
-}
-
--- TODO: how to show two topologies are equal in this setup...?
-theorem Basis.discrete (X: Type u): (Basis.singletons X).generate.Open = (DiscreteTopology X).Open := by
+-- Example 3
+theorem Basis.discrete (X: Type u): Basis.generate (Basis.singleton X)= Set.univ := by
   ext U
   constructor
-  sorry
-  sorry
+  · intro; trivial
+  · intro _ x hx
+    exists {x}
+    repeat' constructor
+    exact Set.singleton_subset_iff.mpr hx
+
+theorem Basis.generate_isTopology {ℬ: Family X} (h: isBasis ℬ): isTopology (Basis.generate ℬ) := {
+  union := sorry
+  inter := sorry
+}
+
+-- TODO: Lemma 13.1, 13.2, 13.3
+
+-- The basis of open interals is defined here, but we may reserve that for next chapter.
+
+-- TODO: Definition of a subbasis.

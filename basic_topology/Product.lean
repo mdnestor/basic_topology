@@ -2,6 +2,7 @@ import basic_topology.Operations
 import basic_topology.Continuity
 import basic_topology.OpenMap
 
+-- todo: prod.fst = proj1
 
 set_option linter.style.multiGoal false
 

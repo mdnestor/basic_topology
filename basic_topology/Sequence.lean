@@ -19,7 +19,7 @@ theorem tail_m_n (s: Nat → X)(m n :Nat)(hmn: m≥n): (tail s n) (m-n) = s m   
   simp_all only [ge_iff_le, Nat.add_sub_cancel']
 --Convergence of sequences--
 def converges (T: Family X) (x: Nat → X) (l: X): Prop :=
-  ∀ N ∈ Nbhds T l, ∃ t, Set.range (tail x t) ⊆ N
+  ∀ N ∈ Nbhd T l, ∃ t, Set.range (tail x t) ⊆ N
 
 def convergent (T: Family X) (x: Nat → X): Prop :=
   ∃ l, converges T x l
@@ -40,7 +40,7 @@ theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetri
   constructor
   · intro h r hr
     let N := openball d l r
-    have h1: N ∈ Nbhds (metric_open d) l := by
+    have h1: N ∈ Nbhd (metric_open d) l := by
       apply openball_neighborhood
       exact hd
       exact hr
@@ -50,7 +50,7 @@ theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetri
     simp [converges]
     intro N hN
     simp [converges_distance] at h
-    simp [Nbhds, neighborhood] at hN
+    simp [Nbhd] at hN
     obtain ⟨ U,hU₁, hU₂, hU₃⟩ := hN
     have h3: ∃r>0, openball d l r ⊆ U := by
       obtain ⟨r, hr₁, hr₂⟩ := hU₁ l hU₂
@@ -71,7 +71,7 @@ theorem converges_distance_iff [DistanceSpace D] (d: X → X → D) (hd: IsMetri
     exact hx
 
 def adherent_value (T: Family X) (x: Nat → X) (a: X): Prop :=
-  ∀ N ∈ Nbhds T a, ∀ t, (Set.range (tail x t) ∩ N).Nonempty
+  ∀ N ∈ Nbhd T a, ∀ t, (Set.range (tail x t) ∩ N).Nonempty
 
 -- defn of a subsequence
 
