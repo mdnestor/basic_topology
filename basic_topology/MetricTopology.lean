@@ -189,9 +189,9 @@ def metrizable (𝒯: Topology X) (D: Type*) [DistanceSpace D]: Prop :=
 --   continuous_inverse := sorry
 -- }
 
-theorem continuous_metric_at_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric_at dX dY f x ↔ continuous_at (metric_opens dX) (metric_opens dY) f x := by
+theorem continuous_metric_at_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric_at dX dY f x ↔ ContinuousAt (metric_opens dX) (metric_opens dY) f x := by
   sorry
 
-theorem continuous_metric_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric dX dY f ↔ continuous (metric_opens dX) (metric_opens dY) f := by
+theorem continuous_metric_iff [DistanceSpace D] (dX: X → X → D) (dY: Y → Y → D) (f: X → Y) (x: X): continuous_metric dX dY f ↔ Continuous (metric_opens dX) (metric_opens dY) f := by
   sorry
 --totally_bounded and complete iff compact--

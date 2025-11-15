@@ -57,11 +57,11 @@ theorem neighborhood_direction_directed_set (T: Family X) (x: X) (hT: IsTopology
 
 
 theorem continuous_at_iff_all_nets_converge {X: Type u} {T: Family X} {T': Family Y} (hT: IsTopology T) (f: X → Y) (x₀: X) :
-  continuous_at T T' f x₀ ↔ ∀ Δ: Type u, ∀ R, directed R → ∀ x: Δ → X , net_converges T R x x₀ → net_converges T' R (f ∘ x) (f x₀) := by
+  ContinuousAt T T' f x₀ ↔ ∀ Δ: Type u, ∀ R, directed R → ∀ x: Δ → X , net_converges T R x x₀ → net_converges T' R (f ∘ x) (f x₀) := by
     constructor
     simp[net_converges]
     intro h_con Δ  R  d  hR hnx
-    rw[continuous_at] at h_con
+    rw[ContinuousAt] at h_con
     intro U hU
     apply h_con at hU
     obtain ⟨ N, ⟨ hN1,hN2⟩ ⟩ := hU
@@ -72,7 +72,7 @@ theorem continuous_at_iff_all_nets_converge {X: Type u} {T: Family X} {T': Famil
     apply hN2
     exact Set.mem_image_of_mem f (hi j hrij)
     contrapose
-    rw[continuous_at]
+    rw[ContinuousAt]
     push_neg
     intro h_con
     obtain ⟨ N,⟨ h1,h2⟩ ⟩ := h_con
