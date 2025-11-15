@@ -2,7 +2,8 @@
 
 Nets in a topological space.
 
-TODO: a type class for nets?
+TODO:
+- type class for nets
 
 -/
 
@@ -10,11 +11,7 @@ import basic_topology.Relation
 import basic_topology.Neighborhood
 import basic_topology.Continuity
 
-set_option linter.style.multiGoal false
-
-universe u v
-
-variable {X: Type u} {Y: Type v} {Δ: Type u}
+variable {X Y: Type*}
 
 
 /-- A directed set is a preorder where any two elements have an upper bound. -/
@@ -25,6 +22,55 @@ def upperbounded (R: Relation X Y): Prop :=
 
 structure directed (R: Endorelation X): Prop extends preorder R where
   upperbounded: upperbounded R
+
+class Net (X: Type u) where
+  index: Type u
+  map: index → X
+  le: Endorelation index
+  directed: directed le
+
+def Net.converges (T: Family X) (x: Net X) (ℓ: X): Prop :=
+  ∀ U ∈ Nbhd T ℓ, ∃ i₀, ∀ j, x.le i₀ j → x.map j ∈ U
+
+def Net.nbhd {X: Type u} {T: Family X} (hT: IsTopology T) (x: X): Net X := {
+  index := Nbhd T x
+  map := fun _ => x
+  le := flip LE.le
+  directed := {
+    reflexive := by
+      intro ⟨U, hU⟩
+      apply le_refl
+    transitive := by
+      intro _ _ _
+      exact flip le_trans
+    upperbounded := by
+      intro ⟨U, hU⟩ ⟨V, hV⟩
+      exists ⟨U ∩ V, neighborhood_binary_inter hT hU hV⟩
+      constructor
+      repeat simp [flip]
+  }
+}
+
+theorem Net.nbhd_converges {X: Type u} {T: Family X} (hT: IsTopology T) (x: X): Net.converges T (Net.nbhd hT x) x := by
+  intro U hU
+  exists ⟨Set.univ, neighborhood_univ hT x⟩
+  exact fun _ _ => neighborhood_mem hU
+
+def Net.sequence (X: Type) (x: Nat → X): Net X := {
+  index := Nat
+  map := x
+  le := Nat.le
+  directed := {
+    reflexive := Nat.le_refl
+    transitive := @Nat.le_trans
+    upperbounded := by
+      intro x y
+      exists max x y
+      constructor
+      · sorry
+      · sorry
+  }
+}
 
 def net_converges {X: Type u} {Δ: Type v} (T: Family X) (R: Relation Δ Δ) (a: Δ → X) (x: X): Prop :=
   ∀ U ∈ Nbhd T x, ∃ i₀, ∀ j, R i₀ j → a j ∈ U
@@ -54,51 +100,80 @@ theorem neighborhood_direction_directed_set (T: Family X) (x: X) (hT: IsTopology
       · exact neighborhood_binary_inter hT hN1 hN2
       · exact Set.inter_subset_right
 
+def Net.comp {X Y: Type u} (f: X → Y) (x: Net X): Net Y := {
+  index := x.index
+  map := f ∘ x.map
+  le := x.le
+  directed := x.directed
+}
+
+theorem continuous_at_iff_all_nets_converge₀ {X Y: Type u} {T: Family X} {T': Family Y} (hT: IsTopology T) (f: X → Y) (x₀: X) :
+  ContinuousAt T T' f x₀ ↔ ∀ x: Net X, Net.converges T x x₀ → Net.converges T' (Net.comp f x) (f x₀) := by
+    constructor
+    · simp[Net.converges]
+      intro hf x h V hV
+      obtain ⟨U, hU₁, hU₂⟩ := hf V hV
+      obtain ⟨i, hi⟩ := h U hU₁
+      exists i
+      intro h hj
+      apply hU₂
+      exact Set.mem_image_of_mem f (hi h hj)
+    · intro h
+      intro V hV
+      have := h (Net.nbhd hT x₀) (Net.nbhd_converges hT x₀)
+      obtain ⟨N₁, hN₁⟩ := this V hV
+      exists N₁.val
+      constructor
+      · exact Subtype.coe_prop N₁
+      · intro x hx
+        have := hN₁ N₁
+        have := N₁.prop
+        sorry
 
 theorem continuous_at_iff_all_nets_converge {X: Type u} {T: Family X} {T': Family Y} (hT: IsTopology T) (f: X → Y) (x₀: X) :
   ContinuousAt T T' f x₀ ↔ ∀ Δ: Type u, ∀ R, directed R → ∀ x: Δ → X , net_converges T R x x₀ → net_converges T' R (f ∘ x) (f x₀) := by
     constructor
-    simp[net_converges]
-    intro h_con Δ  R  d  hR hnx
-    rw[ContinuousAt] at h_con
-    intro U hU
-    apply h_con at hU
-    obtain ⟨ N, ⟨ hN1,hN2⟩ ⟩ := hU
-    apply hnx at hN1
-    obtain ⟨ i,hi⟩ := hN1
-    use i
-    intro j hrij
-    apply hN2
-    exact Set.mem_image_of_mem f (hi j hrij)
-    contrapose
-    rw[ContinuousAt]
-    push_neg
-    intro h_con
-    obtain ⟨ N,⟨ h1,h2⟩ ⟩ := h_con
-    simp[Set.not_subset] at h2
-    let Δ := { N: Set X // N ∈ Nbhd T x₀}
-    let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
-    use Δ, R
-    constructor
-    apply neighborhood_direction_directed_set
-    exact hT
-    let x (d: Δ): X := Classical.choose (h2 d.1 d.2)
-    have x_prop (d: Δ): x d ∈ d.1 ∧ f (x d) ∉ N := Classical.choose_spec (h2 d.1 d.2)
-    use x
-    rw[net_converges]
-    constructor
-    intro U hU
-    use ⟨U, hU⟩
-    intro j hrij
-    exact hrij (x_prop j).1
-    rw[net_converges]
-    push_neg
-    use N
-    constructor
-    exact h1
-    intro i
-    use i
-    exact And.imp_left (fun a ⦃a⦄ a ↦ a) (x_prop i)
+    · simp[net_converges]
+      intro h_con Δ  R  d  hR hnx
+      rw[ContinuousAt] at h_con
+      intro U hU
+      apply h_con at hU
+      obtain ⟨ N, ⟨ hN1,hN2⟩ ⟩ := hU
+      apply hnx at hN1
+      obtain ⟨ i,hi⟩ := hN1
+      use i
+      intro j hrij
+      apply hN2
+      exact Set.mem_image_of_mem f (hi j hrij)
+    · contrapose
+      rw[ContinuousAt]
+      push_neg
+      intro h_con
+      obtain ⟨ N,⟨ h1,h2⟩ ⟩ := h_con
+      simp[Set.not_subset] at h2
+      let Δ := { N: Set X // N ∈ Nbhd T x₀}
+      let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
+      use Δ, R
+      constructor
+      · apply neighborhood_direction_directed_set
+        exact hT
+      · let x (d: Δ): X := Classical.choose (h2 d.1 d.2)
+        have x_prop (d: Δ): x d ∈ d.1 ∧ f (x d) ∉ N := Classical.choose_spec (h2 d.1 d.2)
+        use x
+        rw[net_converges]
+        constructor
+        · intro U hU
+          use ⟨U, hU⟩
+          intro j hrij
+          exact hrij (x_prop j).1
+        · rw[net_converges]
+          push_neg
+          use N
+          constructor
+          · exact h1
+          · intro i
+            use i
+            exact And.imp_left (fun a ⦃a⦄ a ↦ a) (x_prop i)
 
 -- The predicate `adherent T R x a` says a is an adherent value of the net x
 -- with respect to the topology T and the ordering R.
@@ -120,81 +195,81 @@ def Net.adherent (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): Prop :
 
 
 -- A subset S ⊆ X is closed iff. forall nets in S, forall limit points of S, the limit point lies in S.
-theorem Closed_iff_net (T: Family X) (hT: IsTopology T) (A: Set X): Closed T A ↔ ∀ (Δ: Type u) (R) (x₀) (x: Δ → X), directed R → (∀ δ, x δ ∈ A) → net_converges T R x x₀ → x₀ ∈ A := by
+theorem Closed_iff_net {X: Type u} (T: Family X) (hT: IsTopology T) (A: Set X): Closed T A ↔ ∀ (Δ: Type u) (R) (x₀) (x: Δ → X), directed R → (∀ δ, x δ ∈ A) → net_converges T R x x₀ → x₀ ∈ A := by
   rw[closed_iff_eq_closure]
-  simp[closure,adherent ]
-  constructor
-  intro hA Δ R x₀ net hR hδ h_con
-  rw[hA]
-  simp
-  intro N hN
-  rw[net_converges] at h_con
-  apply h_con at hN
-  obtain ⟨i₀, hi₀ ⟩ := hN
-  use net i₀
-  constructor
-  apply hi₀ i₀
-  apply hR.1.1
-  exact hδ i₀
-  intro hΔ
-  ext x
-  simp
-  constructor
-  intro hA N hN
-  use x
-  exact ⟨ neighborhood_mem hN , hA ⟩
-  intro hN
-  let Δ := { N: Set X // N ∈ Nbhd T x}
-  let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
-  choose! f hfN hfA using hN
-  let net: Δ → X := fun ⟨N, hN⟩ => f N hN
-  apply hΔ Δ R x net
-  apply neighborhood_direction_directed_set
-  exact hT
-  exact fun δ ↦ hfA (↑δ) δ.property
-  rw[net_converges]
-  intro U hU
-  simp_all only [Subtype.forall, Subtype.exists, exists_prop, Δ, R, net]
-  apply Exists.intro
-  · apply And.intro
-    on_goal 2 => intro a b a_1
-    on_goal 2 => apply a_1
-    · simp_all only
-    simp_all only
-  exact hT
+  · simp[closure,adherent ]
+    constructor
+    · intro hA Δ R x₀ net hR hδ h_con
+      rw[hA]
+      simp
+      intro N hN
+      rw[net_converges] at h_con
+      apply h_con at hN
+      obtain ⟨i₀, hi₀ ⟩ := hN
+      use net i₀
+      constructor
+      · apply hi₀ i₀
+        apply hR.1.1
+      · exact hδ i₀
+    · intro hΔ
+      ext x
+      simp
+      constructor
+      · intro hA N hN
+        use x
+        exact ⟨ neighborhood_mem hN , hA ⟩
+      · intro hN
+        let Δ := { N: Set X // N ∈ Nbhd T x}
+        let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
+        choose! f hfN hfA using hN
+        let net: Δ → X := fun ⟨N, hN⟩ => f N hN
+        apply hΔ Δ R x net
+        · apply neighborhood_direction_directed_set
+          exact hT
+        · exact fun δ ↦ hfA (↑δ) δ.property
+        · rw[net_converges]
+          intro U hU
+          simp_all only [Subtype.forall, Subtype.exists, exists_prop, Δ, R, net]
+          apply Exists.intro
+          · apply And.intro
+            on_goal 2 => intro a b a_1
+            on_goal 2 => apply a_1
+            · simp_all only
+            simp_all only
+  · exact hT
 
 theorem Net.adherent_iff (T: Family X) (R: Endorelation Δ) (x: Δ → X) (a: X): adherent T R x a ↔ a ∈ ⋂ δ, closure T (Net.tail R x δ) := by
   sorry
 
-theorem Net.closure_mem_iff (T: Family X) (hT: IsTopology T) (A: Set X) (x: X) :
+theorem net_closure_mem_iff {X: Type u} (T: Family X) (hT: IsTopology T) (A: Set X) (x: X) :
   x ∈ closure T A ↔ ∃ Δ: Type u, ∃ R, directed R ∧ ∃ a: Δ → X, net_converges T R a x ∧ (∀ δ, a δ ∈ A) := by
   rw[closure,]
   simp [_root_.adherent]
   constructor
-  intro hx
-  let Δ := { N: Set X // N ∈ Nbhd T x}
-  let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
-  use Δ, R
-  constructor
-  apply neighborhood_direction_directed_set
-  exact hT
-  choose! f h2 h3 using hx
-  let net: Δ → X := fun ⟨N, hN⟩ => f N hN
-  use net
-  constructor
-  rw[ net_converges]
-  intro U hU
-  use ⟨U, hU⟩
-  exact fun j a ↦ a (h2 (↑j) j.property)
-  exact fun δ ↦ h3 (↑δ) δ.property
-  intro hΔR N hN
-  obtain ⟨Δ , ⟨R,hR,net,h_con,h_δ   ⟩  ⟩ := hΔR
-  rw[net_converges] at h_con
-  apply h_con at hN
-  obtain ⟨i₀, hi₀ ⟩:= hN
-  use net i₀
-  constructor
-  apply hi₀
-  apply hR.1.1
-  exact h_δ i₀
+  · intro hx
+    let Δ := { N: Set X // N ∈ Nbhd T x}
+    let R: Endorelation Δ := fun N1 N2 => N2.1 ⊆ N1.1
+    use Δ, R
+    constructor
+    · apply neighborhood_direction_directed_set
+      exact hT
+    · choose! f h2 h3 using hx
+      let net: Δ → X := fun ⟨N, hN⟩ => f N hN
+      use net
+      constructor
+      · rw[ net_converges]
+        intro U hU
+        use ⟨U, hU⟩
+        exact fun j a ↦ a (h2 (↑j) j.property)
+      · exact fun δ ↦ h3 (↑δ) δ.property
+  · intro hΔR N hN
+    obtain ⟨Δ , ⟨R,hR,net,h_con,h_δ   ⟩  ⟩ := hΔR
+    rw[net_converges] at h_con
+    apply h_con at hN
+    obtain ⟨i₀, hi₀ ⟩:= hN
+    use net i₀
+    constructor
+    · apply hi₀
+      apply hR.1.1
+    · exact h_δ i₀
 -- TODO: a is an adherent of image(x) iff. ∃ subnet y of x s.t. y → a.
