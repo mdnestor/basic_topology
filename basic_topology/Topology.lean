@@ -24,7 +24,7 @@ structure IsTopology (𝒯: Family X): Prop where
   sUnion: ∀ 𝒰 ⊆ 𝒯, ⋃₀ 𝒰 ∈ 𝒯
   finite_sInter: ∀ 𝒰 ⊆ 𝒯, Finite 𝒰 → ⋂₀ 𝒰 ∈ 𝒯
 
-structure Topology (X: Type u) where
+class Topology (X: Type u) where
   Open: Family X
   is_topology: IsTopology Open
 
